@@ -116,6 +116,7 @@
     <ClInclude Include="src\player.h" />
     <ClInclude Include="src\projectile.h" />
     <ClInclude Include="src\spritesheet.h" />
+    <ClInclude Include="src\Font.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -68,3 +68,11 @@ bool aabb_circle_intersect(const AABB& a, const Circle& b)
 	return dist < b.radius;
 
 }
+
+bool aabb_point_intersect(const AABB& a, const Point& b)
+{
+	return (b.x < a.x_max&&
+		b.x > a.x_min&&
+		b.y < a.y_max&&
+		b.y > a.y_min);
+}

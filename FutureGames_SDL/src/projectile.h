@@ -7,6 +7,8 @@ struct Projectile
 
 	float x;
 	float y;
+	float w = 8;
+	float h = 8;
 
 	float velocity_x;
 	float velocity_y;
@@ -16,7 +18,6 @@ struct Projectile
 
 	void update();
 	void draw();
-	void update_projectile();
 
 	bool step(float dx, float dy);
 };

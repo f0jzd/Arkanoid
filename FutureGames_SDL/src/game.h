@@ -8,7 +8,7 @@
 #define PROJECTILE_MAX 20
 #define BRICK_MAX 40
 #define BRICK_ROWS 5
-#define BRICK_COLUMNS 8
+#define BRICK_COLUMNS 7
 
 extern Player player;//Stack the plaeyr, put him in stack
 extern Projectile projectiles[PROJECTILE_MAX];

@@ -28,25 +28,12 @@ void Projectile::draw()
 	}
 
 	SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-	SDL_Rect rect = { (int)x-4, (int)y-4,8,8 };
+	SDL_Rect rect = { (int)x-4, (int)y-4,(int)w,(int)h };
 
-	SDL_RenderFillRect(render, &rect);
+	//SDL_RenderFillRect(render, &rect);
 
 }
 
-void Projectile::update_projectile()
-{
-
-	for (int i = 0; i < PROJECTILE_MAX; i++)
-	{
-		if (projectiles[i].alive)
-		{
-
-			projectiles[i].update();
-			projectiles[i].draw();
-		}
-	}
-}
 
 bool Projectile::step(float dx, float dy)
 {
@@ -55,7 +42,7 @@ bool Projectile::step(float dx, float dy)
 	//draw_circle(circle);
 
 	AABB box = AABB::make_from_position_size(player.x+player.playerWidth/2, player.y+player.playerHeight/2, player.playerWidth, player.playerHeight);
-	draw_box(box);
+	//draw_box(box);
 
 
 	for (int i = 0; i < BRICK_COLUMNS; i++)//Here we check collisions with all the bricks

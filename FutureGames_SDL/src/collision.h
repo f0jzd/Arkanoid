@@ -7,6 +7,13 @@ struct Circle
 	float radius;
 };
 
+
+struct Point
+{
+	float x;
+	float y;
+};
+
 void draw_circle(const Circle& circle);
 bool circle_intersect(const Circle& a, const Circle& b);
 
@@ -27,5 +34,7 @@ void draw_filled_box(const AABB& box);
 bool aabb_intersect(const AABB& a, const AABB& b);
 
 bool aabb_circle_intersect(const AABB& a, const Circle& b);
+
+bool aabb_point_intersect(const AABB& a, const Point& b);
 
 

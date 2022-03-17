@@ -18,7 +18,8 @@ using namespace std;
 
 #define WIDTH 1600
 #define HEIGHT 900
-#define IMG_PATH "cow.png"
+#define COW_PATH "cow.png"
+#define COGGERS_PATH "coggers.png"
 
 
 
@@ -78,10 +79,10 @@ vector<int> GetLevels(vector<vector<int>> &levelsContainer)
 	//cout << "Choose your level: ";
 	//cin >> selectedLevel;
 
-	while (selectedLevel>numberOfLines && !levelSelected)
+	while (selectedLevel>=numberOfLines && !levelSelected)
 	{
 
-		if(selectedLevel < numberOfLines)
+		if(selectedLevel <= numberOfLines)
 		{
 			levelSelected = true;
 		}
@@ -167,8 +168,9 @@ int main()
 
 	vector<int> lvl1 = GetLevels(levels);
 
-	int selectedLevel = 0;
+	Brick placedBrick[BRICK_MAX];
 
+	int selectedLevel = 0;
 	
 	///INITILIZATION
 	SDL_Init(SDL_INIT_EVERYTHING);//Initialize the usage of everything
@@ -178,11 +180,18 @@ int main()
 
 	//IMG Initialization
 	SDL_Texture* img = NULL;
-	auto img2 = IMG_LoadTexture(render, IMG_PATH);
+	auto img2 = IMG_LoadTexture(render, COW_PATH);
 	IMG_Init(IMG_INIT_PNG);
 
 	sprite_sheet cow;
-	cow.load(IMG_PATH,112,122);
+	sprite_sheet coggers;
+
+	coggers.load(COGGERS_PATH,112,112);
+	cow.load(COW_PATH,112,122);
+
+
+	SDL_Color white = { 255,255,255,255 };
+	SDL_Color black = { 0, 0, 0 ,255 };
 
 
 	//Font Initialization
@@ -201,15 +210,18 @@ int main()
 
 
 	//Text on mouse initialization
-	SDL_Color white = { 255,255,255,255 };
+	/*
 	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(roboto, "Hello", white);
 	SDL_Texture* message = SDL_CreateTextureFromSurface(render, surfaceMessage);
-	SDL_Rect message_rect;
+	SDL_Rect message_rect;*/
 
 
 	//Image Variables
 	int frame = 0;
 	float frameTimer = 0.f;
+
+
+	int placedB = 0;
 
 
 	//MAIN LOOP HANDLER + TICKS
@@ -221,15 +233,15 @@ int main()
 	
 
 	//ETC
-	string playerText = "askdj";
+	string playerText = "";
 	string instructtonText = "Choose a level: 1 - " + to_string(levels.size());
 
 	//Get mouse position in window
-	int xPos, yPos;//For mouse position
+	int xPos = 0, yPos= 0;//For mouse position
 	//GetMousePos(xPos, yPos); //method that gets the actual position
 
 	//Text input thing
-	SDL_Color black = { 0, 0, 0 ,255};
+	
 	SDL_Surface* InputTextSurface = TTF_RenderText_Solid(runescape_uf, playerText.c_str(), white);
 	if (!InputTextSurface) {
 		cout << "Failed to render text: " << TTF_GetError() << endl;
@@ -243,13 +255,123 @@ int main()
 	SDL_Rect dest;
 	SDL_Rect dest2;
 
+	bool ranning = true;
+
+
+	Point mouse;
+
+	while (ranning)
+	{
+
+		
+		mouse.x = xPos;
+		mouse.y = yPos;
+		SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+
+		SDL_PumpEvents();
+		Uint32 buttons = SDL_GetMouseState(&xPos, &yPos);
+
+		SDL_Event ev;
+
+		SDL_SetRenderDrawColor(render, 0, 0, 255, 255);
+		auto bawks = AABB::make_from_position_size(1300, 800, 100, 100);
+		draw_filled_box(bawks);
+
+		
+		while (SDL_PollEvent(&ev))
+		{
+			switch (ev.type)
+			{
+			case SDL_MOUSEBUTTONDOWN:
+
+				if (!aabb_point_intersect(bawks, mouse))
+				{
+					cout << "Ounga" << endl;
+					SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
+
+					buttons = SDL_GetMouseState(&xPos, &yPos);
+					auto bawks = AABB::make_from_position_size(xPos, yPos, 100, 100);
+					placedBrick[placedB].x = xPos;
+					placedBrick[placedB].y = yPos;
+					placedBrick[placedB].draw();
+					placedB++;
+				}
+				
+
+				break;
+
+			case SDL_KEYDOWN:
+			{
+				if (ev.key.repeat)
+				{
+					break;
+				}
+				int scancode = ev.key.keysym.scancode;
+				if (scancode == SDL_SCANCODE_ESCAPE)
+				{
+					ranning = false;
+					SDL_Quit();
+				}
+				break;
+			}
+			}
+
+			
+
+			if (ev.type == SDL_MOUSEBUTTONDOWN && aabb_point_intersect(bawks, mouse))
+			{
+				cout << "Hovering button" << endl;
+			}
+		}
+
+		
+
+		
+
+		
+
+		for (size_t i = 0; i <= placedB; i++)
+		{
+
+			Brick& brick = placedBrick[i];
+
+			AABB box = AABB::make_from_position_size(brick.x, brick.y, brick.w, brick.h);
+
+			if (aabb_point_intersect(box, mouse))
+			{
+				cout << "sldzkdfhdskl adsh adsjlfg " << endl;
+			}
+		}
+
+		
+
+
+		
+		SDL_RenderPresent(render);
+	}
+
+
+	return 0;
+
+
+
 	while (selectLevel) {
 
+
+		
+
+		
 		SDL_RenderClear(render);
+
+		SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
+		auto bawks = AABB::make_from_position_size(100, 100, 100, 100);
+		draw_filled_box(bawks);
+
+		SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
 
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev)) {
-			if (ev.type == SDL_TEXTINPUT && playerText.length()<1) 
+			if (ev.type == SDL_TEXTINPUT && playerText.length()<1 && *ev.text.text != ' ')
 			{
 				playerText += ev.text.text;
 				cout << " > " << playerText << endl;
@@ -275,10 +397,9 @@ int main()
 					{
 						if (std::isdigit(val))
 						{
-							if (int ia = val - '0' < levels.size())
+							if (int ia = val - '0' <= levels.size())
 							{
-								selectedLevel = val - '0';
-
+								selectedLevel = (val - '0') - 1;
 								selectLevel = false;
 								break;
 							}
@@ -289,6 +410,8 @@ int main()
 								instructtonText = "Idiot, choose a level between 1 - " + to_string(levels.size());
 								InstructionTextSurface = TTF_RenderText_Solid(runescape_uf, instructtonText.c_str(), white);
 								instruction_texture = SDL_CreateTextureFromSurface(render, InstructionTextSurface);
+
+
 							}
 
 						}
@@ -315,6 +438,8 @@ int main()
 		}
 		SDL_Surface* text_surf2 = TTF_RenderText_Solid(runescape_uf, instructtonText.c_str(), white);
 		if (!instructtonText.empty()) {
+
+			instruction_texture = SDL_CreateTextureFromSurface(render, text_surf2);
 			dest2.x = WIDTH / 2 - (text_surf2->w / 2.0f);
 			dest2.y = HEIGHT / 2 - (text_surf2->h / 2.0f)-120;
 			dest2.w = text_surf2->w;
@@ -327,15 +452,14 @@ int main()
 
 		SDL_DestroyTexture(text_texture);
 		SDL_FreeSurface(text_surf);
+		SDL_DestroyTexture(instruction_texture);
+		SDL_FreeSurface(text_surf2);
+
 
 	}
-
-	
-	
+		
 	SDL_StopTextInput();
-	
 
-	
 	while (running)
 	{
 		frameNumber++;
@@ -392,18 +516,18 @@ int main()
 		SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
 		SDL_RenderClear(render);
 		
-		projectiles->update_projectile();
+
 		player.update();
 		player.draw();
 
-
+		wall->draw_walls();
+		wall->draw_roof();
 		
 
 		//handle_text_ingame(message, message_rect);
 		
 
-		wall->draw_walls();
-		wall->draw_roof();
+		
 
 
 		for (int i = 0; i < 30; i++)
@@ -417,8 +541,8 @@ int main()
 		{
 			for (int j = 0; j < BRICK_ROWS; j++)
 			{
-				bricks[i][j].x = bricks[i][j].w * i + bricks[i][j].w * 1.5;//30 here is the distance from the left side of the screen, while the bricks.w is the distance between the bricks
-				bricks[i][j].y = bricks[i][j].h * j + bricks[i][j].h * 1.5;//30 here is the distance from the left side of the screen, while the bricks.w is the distance between the bricks
+				bricks[i][j].x = bricks[i][j].margin * i + bricks[i][j].margin;
+				bricks[i][j].y = bricks[i][j].h * j + bricks[i][j].h * 1.5;
 			}
 		}
 
@@ -428,13 +552,25 @@ int main()
 
 		frameTimer += delta_time;
 
+		for (int i = 0; i < PROJECTILE_MAX; i++)
+		{
+			if (projectiles[i].alive)
+			{
+				coggers.draw((int)(frameTimer * 20) % 60, projectiles[i].x- projectiles[i].w/2, projectiles[i].y- projectiles[i].h/2,projectiles[i].h,projectiles[i].w);
+				projectiles[i].update();
+				projectiles[i].draw();
+			}
+		}
+		
+		
+
 		for (int i = 0; i < BRICK_COLUMNS; i++)
 		{
 			for (int j = 0; j < BRICK_ROWS; j++)
 			{
 				if (bricks[i][j].alive)
 				{
-					cow.draw((int)(frameTimer*20) % 21, bricks[i][j].x - 80, bricks[i][j].y - 30, bricks[i][j].w, bricks[i][j].h);
+					cow.draw((int)(frameTimer*20) % 21, bricks[i][j].x - bricks[i][j].w/2, bricks[i][j].y - bricks[i][j].h / 2, bricks[i][j].w, bricks[i][j].h);
 				}
 				bricks[i][j].draw();
 			}
@@ -444,22 +580,6 @@ int main()
 
 		//drawSprites(img, imgH, imgW, 5,img2, cow);
 
-
-		
-
-
-
-		/*frameTimer -= delta_time;
-
-		if (frameTimer < 0)
-		{
-			frame++;
-			frameTimer = 0.04545454545;
-			if (frame == 21)
-			{
-				frame = 0;
-			}
-		}*/
 				
 
 		SDL_RenderPresent(render);
