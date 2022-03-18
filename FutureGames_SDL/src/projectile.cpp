@@ -45,45 +45,64 @@ bool Projectile::step(float dx, float dy)
 	//draw_box(box);
 
 
-	for (int i = 0; i < BRICK_COLUMNS; i++)//Here we check collisions with all the bricks
+	if (!custom_level_loaded)
 	{
-		for (int j = 0; j < BRICK_ROWS; j++)
+		for (int i = 0; i < BRICK_COLUMNS; i++)//Here we check collisions with all the bricks
 		{
-			Brick& brick = bricks[i][j];
-
-			if (!brick.alive)
-				continue;
-
-			
-			AABB box = AABB::make_from_position_size(brick.x, brick.y, brick.w, brick.h);
-
-
-			if (aabb_circle_intersect(box, circle))//If the circle and box intersect a.k.a. the bullet and the brick, then something happens
+			for (int j = 0; j < BRICK_ROWS; j++)
 			{
-				
-				if (!brick.breakable && !brick.strongWall)
-				{
-					return false;
-				}
-				else if (!brick.breakable || brick.strongWall)
-				{
-				     brick.strongWallLifes -= 1;
-					 if (brick.strongWallLifes == 0)
-					 {
-					 	brick.alive = false;	
-					 }
-					return false;
-				}
+				Brick& brick = bricks[i][j];
 
-				if (brick.breakable)
+				if (!brick.alive)
+					continue;
+
+
+				AABB box = AABB::make_from_position_size(brick.x, brick.y, brick.w, brick.h);
+
+
+				if (aabb_circle_intersect(box, circle))//If the circle and box intersect a.k.a. the bullet and the brick, then something happens
 				{
-					brick.alive = false;
-					return	false;
+
+					if (!brick.breakable && !brick.strongWall)
+					{
+						return false;
+					}
+					if (!brick.breakable || brick.strongWall)
+					{
+						brick.strongWallLifes -= 1;
+						if (brick.strongWallLifes == 0)
+						{
+							brick.alive = false;
+						}
+						return false;
+					}
+
+					if (brick.breakable)
+					{
+						brick.alive = false;
+						return	false;
+					}
+
 				}
-								
 			}
-		}
 
+		}
+	}
+	if (custom_level_loaded)
+	{
+		for (int i = 0; i < placedB; ++i)
+		{
+			AABB customMadeBrick = AABB::make_from_position_size(placedBrick[i].x, placedBrick[i].y, placedBrick[i].w, placedBrick[i].h);
+			draw_filled_box(customMadeBrick);
+
+
+			if (aabb_circle_intersect(customMadeBrick, circle))//If the circle and box intersect a.k.a. the bullet and the brick, then something happens
+			{
+				placedBrick[i].alive = false;
+				return false;
+			}
+
+		}
 	}
 
 	if (dy<0.f)

@@ -13,5 +13,10 @@
 extern Player player;//Stack the plaeyr, put him in stack
 extern Projectile projectiles[PROJECTILE_MAX];
 extern Brick bricks[BRICK_COLUMNS][BRICK_ROWS];
+extern Brick placedBrick[BRICK_MAX];
 extern Wall wall[40];
+
+extern bool custom_level_loaded;
+
+extern int placedB;
 

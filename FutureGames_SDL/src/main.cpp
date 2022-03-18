@@ -37,7 +37,6 @@ void UpdateProjectiles()
 	}
 }
 
-
 vector<int> GetLevels(vector<vector<int>> &levelsContainer)
 {
 	vector<int> theLevel;
@@ -136,42 +135,32 @@ void SetBrickType(vector<int> lvl1, int l)
 	}
 }
 
-void handle_text_ingame(SDL_Texture* message, SDL_Rect& message_rect)
-{
-	message_rect.x = 0;
-	message_rect.y = 0;
-	message_rect.w = 100;
-	message_rect.h = 100;
-
-	int xPos, yPos;
-	SDL_PumpEvents();
-	Uint32 buttons = SDL_GetMouseState(&xPos, &yPos);
-	message_rect.x = xPos - 50;
-	message_rect.y = yPos - 50;
-	SDL_RenderCopy(render, message, NULL, &message_rect);
-}
-
 void GetMousePos(int &xPos, int &yPos)
 {
 	SDL_PumpEvents();
 	Uint32 buttons = SDL_GetMouseState(&xPos, &yPos);
 }
 
+
+
 int main()
 {
 
-	/*SDL_Surface* gWindow = NULL;
-	SDL_Surface* gScreenSurface = NULL;
-	SDL_Surface* gPNGSurface = NULL;*/
-
+	//Handling level from file
 	vector<vector<int>> levels;
-
 	vector<int> lvl1 = GetLevels(levels);
-
-	Brick placedBrick[BRICK_MAX];
-
 	int selectedLevel = 0;
-	
+
+
+	//Level Editor things
+	//Brick placedBrick[BRICK_MAX];
+
+	vector<Brick> customlevel;
+	vector<Brick> levelfromfile;
+
+	SDL_Rect done_message_rect;
+
+
 	///INITILIZATION
 	SDL_Init(SDL_INIT_EVERYTHING);//Initialize the usage of everything
 	window = SDL_CreateWindow("Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, 0); //A structure to refer to the window we just made
@@ -190,6 +179,7 @@ int main()
 	cow.load(COW_PATH,112,122);
 
 
+	//Colors
 	SDL_Color white = { 255,255,255,255 };
 	SDL_Color black = { 0, 0, 0 ,255 };
 
@@ -208,74 +198,81 @@ int main()
 		cout << "runescape finna broke";
 	}
 
-
-	//Text on mouse initialization
-	/*
-	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(roboto, "Hello", white);
-	SDL_Texture* message = SDL_CreateTextureFromSurface(render, surfaceMessage);
-	SDL_Rect message_rect;*/
-
-
+	
 	//Image Variables
 	int frame = 0;
 	float frameTimer = 0.f;
 
+	//Loading from file stuff
+	string file = "values.txt";
+	fstream infile;
 
-	int placedB = 0;
 
-
-	//MAIN LOOP HANDLER + TICKS
+	//MAIN LOOP HANDLER
 	bool running = true;
 	bool selectLevel = true;
+	bool editing_level = true;
+
+	//TICKS
 	Uint64 previousTicks = SDL_GetPerformanceCounter();
-
-
-	
 
 	//ETC
 	string playerText = "";
 	string instructtonText = "Choose a level: 1 - " + to_string(levels.size());
+	string custom_level_text = "Press 0 to load your custom level";
 
 	//Get mouse position in window
 	int xPos = 0, yPos= 0;//For mouse position
-	//GetMousePos(xPos, yPos); //method that gets the actual position
+	//GetMousePos(xPos, yPos); //method that gets the position
 
-	//Text input thing
-	
+	//Text input things
+
+	//Create surfaces
 	SDL_Surface* InputTextSurface = TTF_RenderText_Solid(runescape_uf, playerText.c_str(), white);
-	if (!InputTextSurface) {
-		cout << "Failed to render text: " << TTF_GetError() << endl;
-	}
 	SDL_Surface* InstructionTextSurface = TTF_RenderText_Solid(runescape_uf, instructtonText.c_str(), white);
-	if (!InstructionTextSurface) {
-		cout << "Failed to render text: " << TTF_GetError() << endl;
-	}
+	SDL_Surface* custom_level_text_surface = TTF_RenderText_Solid(runescape_uf, custom_level_text.c_str(), white);
+
+	//Create textures
 	SDL_Texture* text_texture = SDL_CreateTextureFromSurface(render,InputTextSurface );
 	SDL_Texture* instruction_texture = SDL_CreateTextureFromSurface(render,InstructionTextSurface );
+	SDL_Texture* custom_level_texture = SDL_CreateTextureFromSurface(render, custom_level_text_surface);
+
+	//Texts rects
 	SDL_Rect dest;
 	SDL_Rect dest2;
+	SDL_Rect dest3;
 
-	bool ranning = true;
-
-
+	
+	//Mouse point
 	Point mouse;
 
-	while (ranning)
+	while (editing_level)
 	{
 
-		
-		mouse.x = xPos;
-		mouse.y = yPos;
 		SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
 
+
+		mouse.x = xPos;
+		mouse.y = yPos;
 		SDL_PumpEvents();
 		Uint32 buttons = SDL_GetMouseState(&xPos, &yPos);
 
 		SDL_Event ev;
 
+		SDL_Surface* surfaceMessage = TTF_RenderText_Solid(roboto, "Done", white);
+		SDL_Texture* message = SDL_CreateTextureFromSurface(render, surfaceMessage);
+
 		SDL_SetRenderDrawColor(render, 0, 0, 255, 255);
-		auto bawks = AABB::make_from_position_size(1300, 800, 100, 100);
+		auto bawks = AABB::make_from_position_size(1300, 800, surfaceMessage->w, surfaceMessage->h);
 		draw_filled_box(bawks);
+
+
+		done_message_rect.x = bawks.x_min;
+		done_message_rect.y = bawks.y_min;
+		done_message_rect.w = surfaceMessage->w;
+		done_message_rect.h = surfaceMessage->h;
+
+		SDL_RenderCopy(render, message, NULL, &done_message_rect);
 
 		
 		while (SDL_PollEvent(&ev))
@@ -286,11 +283,11 @@ int main()
 
 				if (!aabb_point_intersect(bawks, mouse))
 				{
-					cout << "Ounga" << endl;
 					SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-
 					buttons = SDL_GetMouseState(&xPos, &yPos);
 					auto bawks = AABB::make_from_position_size(xPos, yPos, 100, 100);
+
+					placedBrick[placedB].alive = true;
 					placedBrick[placedB].x = xPos;
 					placedBrick[placedB].y = yPos;
 					placedBrick[placedB].draw();
@@ -309,28 +306,42 @@ int main()
 				int scancode = ev.key.keysym.scancode;
 				if (scancode == SDL_SCANCODE_ESCAPE)
 				{
-					ranning = false;
+					editing_level = false;
 					SDL_Quit();
 				}
 				break;
 			}
 			}
 
-			
 
 			if (ev.type == SDL_MOUSEBUTTONDOWN && aabb_point_intersect(bawks, mouse))
 			{
 				cout << "Hovering button" << endl;
+
+				for (int i = 0; i <= placedB; ++i)
+				{
+
+					string file = "values.txt";
+					fstream infile;
+					infile.open(file, ios::out);
+
+					for (int i = 0; i < placedB; ++i)
+					{
+						infile << placedBrick[i].x << ',' << placedBrick[i].y;
+						infile << endl;
+					}
+
+					infile.close();
+					customlevel.push_back(placedBrick[i]);
+				}
+				editing_level = false;
+				break;
 			}
 		}
 
-		
+		//Collision checking function, can be removed but wanted to keep it for testing in future.
 
-		
-
-		
-
-		for (size_t i = 0; i <= placedB; i++)
+		/*for (size_t i = 0; i < placedB; i++)
 		{
 
 			Brick& brick = placedBrick[i];
@@ -341,31 +352,23 @@ int main()
 			{
 				cout << "sldzkdfhdskl adsh adsjlfg " << endl;
 			}
-		}
+		}*/
 
 		
 
-
-		
 		SDL_RenderPresent(render);
+
+		SDL_DestroyTexture(message);
+		SDL_FreeSurface(surfaceMessage);
+		
+
 	}
-
-
-	return 0;
-
 
 
 	while (selectLevel) {
 
-
-		
-
-		
 		SDL_RenderClear(render);
 
-		SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-		auto bawks = AABB::make_from_position_size(100, 100, 100, 100);
-		draw_filled_box(bawks);
 
 		SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
 
@@ -411,13 +414,63 @@ int main()
 								InstructionTextSurface = TTF_RenderText_Solid(runescape_uf, instructtonText.c_str(), white);
 								instruction_texture = SDL_CreateTextureFromSurface(render, InstructionTextSurface);
 
-
 							}
-
 						}
 					}
-
 				}
+				if (scancode == SDL_SCANCODE_0)
+				{
+
+					
+					infile.open(file, ios::in);
+
+					for (int i = 0; i < placedB; ++i)
+					{
+						string tempstr;
+						string substr;
+						int tempint;
+
+						getline(infile, tempstr);
+
+						for (int i = 0; i < tempstr.length(); ++i)
+						{
+							if (tempstr[i] == ',')
+							{
+
+								Brick tempbrick;
+
+								substr = tempstr.substr(0, i);
+								tempint = atoi(substr.c_str());
+
+								tempbrick.x = tempint;
+
+								substr = tempstr.substr(i+1,tempstr.length());
+								tempint = atoi(substr.c_str());
+
+								tempbrick.y = tempint;
+
+								cout << tempbrick.x << " : " << tempbrick.y << endl;
+
+
+								levelfromfile.push_back(tempbrick);
+
+							}
+						}
+
+
+					}
+
+					infile.close();
+
+
+
+					cout << "loading custom level" << endl;
+					selectLevel = false;
+					custom_level_loaded = true;
+					break;
+				}
+
+
 
 				keys[scancode] = true;//Sets the specific key bool to true, depending on the key we press.
 				break;
@@ -433,8 +486,6 @@ int main()
 			dest.y = HEIGHT/2 - (text_surf->h/2.0f);
 			dest.w = text_surf->w;
 			dest.h = text_surf->h;
-
-			
 		}
 		SDL_Surface* text_surf2 = TTF_RenderText_Solid(runescape_uf, instructtonText.c_str(), white);
 		if (!instructtonText.empty()) {
@@ -445,15 +496,28 @@ int main()
 			dest2.w = text_surf2->w;
 			dest2.h = text_surf2->h;
 		}
+		SDL_Surface* text_surf3 = TTF_RenderText_Solid_Wrapped(runescape_uf, custom_level_text.c_str(), white,1600);
+		if (!custom_level_text.empty()) {
+
+			
+			custom_level_texture = SDL_CreateTextureFromSurface(render, text_surf3);
+			dest3.x = WIDTH / 2 - (text_surf3->w / 2.0f);
+			dest3.y = HEIGHT / 2 - (text_surf3->h / 2.0f) - 200;
+			dest3.w = text_surf3->w;
+			dest3.h = text_surf3->h;
+		}
 
 		SDL_RenderCopy(render, text_texture, NULL, &dest);
 		SDL_RenderCopy(render, instruction_texture, NULL, &dest2);
+		SDL_RenderCopy(render, custom_level_texture, NULL, &dest3);
 		SDL_RenderPresent(render);
 
 		SDL_DestroyTexture(text_texture);
 		SDL_FreeSurface(text_surf);
 		SDL_DestroyTexture(instruction_texture);
 		SDL_FreeSurface(text_surf2);
+		SDL_DestroyTexture(custom_level_texture);
+		SDL_FreeSurface(text_surf3);
 
 
 	}
@@ -524,31 +588,39 @@ int main()
 		wall->draw_roof();
 		
 
-		//handle_text_ingame(message, message_rect);
-		
-
-		
-
 
 		for (int i = 0; i < 30; i++)
 		{
 			wall[i].draw();
 		}
 
-
-	
-		for (int i = 0; i < BRICK_COLUMNS; i++)
+		if (custom_level_loaded)
 		{
-			for (int j = 0; j < BRICK_ROWS; j++)
+			for (size_t i = 0; i < placedB; i++)
 			{
-				bricks[i][j].x = bricks[i][j].margin * i + bricks[i][j].margin;
-				bricks[i][j].y = bricks[i][j].h * j + bricks[i][j].h * 1.5;
+				levelfromfile[i].draw();
 			}
 		}
+		if (!custom_level_loaded)
+		{
+			for (int i = 0; i < BRICK_COLUMNS; i++)
+			{
+				for (int j = 0; j < BRICK_ROWS; j++)
+				{
+					bricks[i][j].x = bricks[i][j].margin * i + bricks[i][j].margin;
+					bricks[i][j].y = bricks[i][j].h * j + bricks[i][j].h * 1.5;
+				}
+			}
+		}
+		
+
+
+		
 
 		int l = 0;
 
-		SetBrickType(levels[selectedLevel], l);
+		//SetBrickType(levels[selectedLevel], l);
+
 
 		frameTimer += delta_time;
 
@@ -562,8 +634,22 @@ int main()
 			}
 		}
 		
-		
 
+		if (custom_level_loaded)
+		{
+			for (size_t i = 0; i < placedB; i++)
+			{
+				if (levelfromfile[i].alive)
+				{
+					cow.draw((int)(frameTimer * 20) % 21, levelfromfile[i].x - levelfromfile[i].w / 2, levelfromfile[i].y - levelfromfile[i].h / 2, levelfromfile[i].w, levelfromfile[i].h);
+				}
+				levelfromfile[i].draw();
+			}
+		}
+
+
+		if (!custom_level_loaded)
+		{
 		for (int i = 0; i < BRICK_COLUMNS; i++)
 		{
 			for (int j = 0; j < BRICK_ROWS; j++)
@@ -574,6 +660,7 @@ int main()
 				}
 				bricks[i][j].draw();
 			}
+		}
 		}
 
 
